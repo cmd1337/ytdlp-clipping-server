@@ -37,8 +37,7 @@ def run_yt_dlp_process(
     start_time_str: str,
     end_time_str: str,
     target_filename: str,
-    timescale_str: str,
-) -> str:
+    timescale_str: str) -> str:
     logger.info(f"[{task_id}] Extracting info for: {url}")
     final_filename = target_filename
 
@@ -93,6 +92,8 @@ def run_yt_dlp_process(
 
     if not actual_file:
         raise FileNotFoundError("yt-dlp finished but output file was not detected")
+
+    logger.info(f"Clip {[final_filename]}] successfully saved to {[ydl.params["outtmpl"]]}.")
 
     if Config.SERVER_DOMAIN:
         base_url = Config.SERVER_DOMAIN if Config.SERVER_DOMAIN.endswith("/") else f"{Config.SERVER_DOMAIN}/"
