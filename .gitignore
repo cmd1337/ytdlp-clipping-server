@@ -7,3 +7,4 @@ downloads/
 *.log
 .dockerignore
 tasks.db
+logs/
