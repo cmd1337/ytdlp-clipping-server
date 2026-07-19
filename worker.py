@@ -9,8 +9,36 @@ from utils import parse_timerange, fragment_gen_factory, TIMESCALES
 task_queue: asyncio.Queue[str] = asyncio.Queue()
 
 
-def run_yt_dlp_process(task_id: str, url: str, start_time_str: str, end_time_str: str, target_filename: str,
-                       timescale_str: str) -> str:
+def time_to_seconds(time_str: str) -> int:
+    hours, minutes, seconds = (int(part) for part in time_str.split(":"))
+    return hours * 3600 + minutes * 60 + seconds
+
+
+def build_vod_options(outtmpl_path: str, start_time_str: str, end_time_str: str) -> dict:
+    download_range = (time_to_seconds(start_time_str), time_to_seconds(end_time_str))
+    vod_opts = {
+        "outtmpl": outtmpl_path,
+        "format": Config.VOD_FORMAT,
+        "download_ranges": yt_dlp.utils.download_range_func(None, [download_range]),
+        "force_keyframes_at_cuts": True,
+        "quiet": True,
+        "no_warnings": True,
+    }
+
+    if Config.VOD_PROXY:
+        vod_opts["proxy"] = Config.VOD_PROXY
+
+    return vod_opts
+
+
+def run_yt_dlp_process(
+    task_id: str,
+    url: str,
+    start_time_str: str,
+    end_time_str: str,
+    target_filename: str,
+    timescale_str: str,
+) -> str:
     logger.info(f"[{task_id}] Extracting info for: {url}")
     final_filename = target_filename
 
@@ -53,19 +81,7 @@ def run_yt_dlp_process(task_id: str, url: str, start_time_str: str, end_time_str
         else:
             logger.info(f"[{task_id}] Processing static video (VOD) or finished stream.")
 
-            def to_secs(s: str) -> int:
-                t = s.split(":")
-                return (int(t[0]) * 60 + int(t[1])) * 60 + int(t[2])
-
-            vod_opts = {
-                "outtmpl": outtmpl_path,
-                "format": "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b",
-                "proxy": "http://127.0.0.1:7890",
-                "download_ranges": yt_dlp.utils.download_range_func(None, [(to_secs(start_time_str), to_secs(end_time_str))]),
-                "force_keyframes_at_cuts": True,
-                "quiet": True,
-                "no_warnings": True,
-            }
+            vod_opts = build_vod_options(outtmpl_path, start_time_str, end_time_str)
             with yt_dlp.YoutubeDL(vod_opts) as ydl_vod:
                 ydl_vod.download([url])
 
