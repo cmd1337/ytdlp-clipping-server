@@ -1,0 +1,9 @@
+.idea/
+__pycache__/
+*.py[cod]
+venv/
+downloads/
+.env
+*.log
+.dockerignore
+tasks.db
