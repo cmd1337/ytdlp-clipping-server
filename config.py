@@ -69,10 +69,20 @@ def configure_logging() -> logging.Logger:
         force=True,
     )
 
-    for logger_name in ("uvicorn", "uvicorn.error", "uvicorn.access", "fastapi"):
-        logging.getLogger(logger_name).handlers.clear()
-        logging.getLogger(logger_name).propagate = False
-        logging.getLogger(logger_name).setLevel(logging.WARNING)
+    uvicorn_loggers = (
+        "uvicorn",
+        "uvicorn.error",
+        "uvicorn.access",
+        "fastapi",
+        "watchfiles",
+        "watchfiles.main",
+    )
+    for logger_name in uvicorn_loggers:
+        noisy_logger = logging.getLogger(logger_name)
+        noisy_logger.handlers.clear()
+        noisy_logger.propagate = False
+        noisy_logger.setLevel(logging.WARNING)
+        noisy_logger.disabled = True
 
     return logging.getLogger("YTDLP_Server")
 
