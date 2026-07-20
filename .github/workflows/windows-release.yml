@@ -24,7 +24,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements-build.txt
 
-      - name: Build hidden tray executable
+      - name: Build executable
         run: >-
           pyinstaller --onefile --noconsole --name ytdlp-clipping-server
           --hidden-import main --hidden-import config --hidden-import database
