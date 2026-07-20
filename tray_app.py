@@ -1,8 +1,4 @@
 """Windows tray launcher for the clipping server.
-
-The packaged executable starts the FastAPI app through uvicorn without opening a
-console window. A tray icon is shown while the server process is running and can
-be used to stop it gracefully.
 """
 
 from __future__ import annotations
@@ -12,11 +8,9 @@ import signal
 import subprocess
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
-import pystray
 import uvicorn
-from PIL import Image, ImageDraw
 
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
@@ -29,8 +23,24 @@ def application_dir() -> Path:
     return Path(__file__).resolve().parent
 
 
+def server_command() -> list[str]:
+    if getattr(sys, "frozen", False):
+        return [sys.executable, SERVER_ARG]
+    return [sys.executable, str(Path(__file__).resolve()), SERVER_ARG]
+
+
+def server_log_path() -> Path:
+    log_dir = application_dir() / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    return log_dir / "tray_server.log"
+
+
 def run_server() -> None:
     os.chdir(application_dir())
+
+    from main import app as _server_app
+
+    del _server_app
     uvicorn.run(
         "main:app",
         host=UVICORN_HOST,
@@ -39,7 +49,9 @@ def run_server() -> None:
     )
 
 
-def create_icon_image() -> Image.Image:
+def create_icon_image() -> Any:
+    from PIL import Image, ImageDraw
+
     image = Image.new("RGBA", (64, 64), (21, 101, 192, 255))
     draw = ImageDraw.Draw(image)
     draw.rounded_rectangle((8, 14, 56, 50), radius=10, fill=(255, 255, 255, 255))
@@ -49,7 +61,11 @@ def create_icon_image() -> Image.Image:
 
 class TrayServer:
     def __init__(self) -> None:
+        import pystray
+
+        self.pystray = pystray
         self.process: Optional[subprocess.Popen[bytes]] = None
+        self.log_handle: Optional[Any] = None
         self.icon = pystray.Icon(
             "ytdlp-clipping-server",
             create_icon_image(),
@@ -68,31 +84,35 @@ class TrayServer:
             startupinfo = subprocess.STARTUPINFO()
             startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
 
+        self.log_handle = server_log_path().open("ab")
         self.process = subprocess.Popen(
-            [sys.executable, SERVER_ARG],
+            server_command(),
             cwd=application_dir(),
             stdin=subprocess.DEVNULL,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
+            stdout=self.log_handle,
+            stderr=subprocess.STDOUT,
             creationflags=creationflags,
             startupinfo=startupinfo,
         )
 
     def stop_server(self) -> None:
-        if not self.process or self.process.poll() is not None:
-            return
-
-        if os.name == "nt":
-            self.process.terminate()
-        else:
-            self.process.send_signal(signal.SIGTERM)
-
         try:
-            self.process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            self.process.kill()
+            if self.process and self.process.poll() is None:
+                if os.name == "nt":
+                    self.process.terminate()
+                else:
+                    self.process.send_signal(signal.SIGTERM)
 
-    def exit_app(self, icon: pystray.Icon, item: pystray.MenuItem) -> None:
+                try:
+                    self.process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+        finally:
+            if self.log_handle:
+                self.log_handle.close()
+                self.log_handle = None
+
+    def exit_app(self, icon: Any, item: Any) -> None:
         self.stop_server()
         icon.stop()
 
