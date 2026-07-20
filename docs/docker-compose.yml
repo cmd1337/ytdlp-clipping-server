@@ -1,0 +1,13 @@
+services:
+  ytdlp-clipping-server:
+    image: cmd1337/ytdlp-clipping-server:latest
+    build:
+      context: .
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./downloads:/app/downloads
+      - ./logs:/app/logs
+    restart: unless-stopped
