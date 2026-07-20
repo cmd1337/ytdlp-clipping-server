@@ -49,6 +49,7 @@ def run_yt_dlp_process(
 
     outtmpl_path = os.path.join(Config.DOWNLOAD_DIR, f"{final_filename}.%(ext)s")
 
+    # basic ydl_opts
     ydl_opts = apply_proxy_options({
         "live_from_start": True,
         "quiet": True,
@@ -67,10 +68,12 @@ def run_yt_dlp_process(
             timescale = TIMESCALES.get(timescale_str, TIMESCALES["normal"])
             start_chunk, end_chunk = parse_timerange(start_time_str, end_time_str, timescale)
 
+            # Tricking yt-dlp into thinking it's ended livestream
             info["live_status"] = "was_live"
             info["is_live"] = False
             info["was_live"] = True
 
+            # magic im lazy to explain
             chunk_range = range(start_chunk + 1, end_chunk + 1)
             for i, fmt in enumerate(info["formats"]):
                 if fmt.get("fragments"):

@@ -78,11 +78,11 @@ def configure_logging() -> logging.Logger:
         "watchfiles.main",
     )
     for logger_name in uvicorn_loggers:
-        noisy_logger = logging.getLogger(logger_name)
-        noisy_logger.handlers.clear()
-        noisy_logger.propagate = False
-        noisy_logger.setLevel(logging.WARNING)
-        noisy_logger.disabled = True
+        uvicorn_logger = logging.getLogger(logger_name)
+        uvicorn_logger.handlers.clear()
+        uvicorn_logger.propagate = False
+        uvicorn_logger.setLevel(logging.WARNING)
+        uvicorn_logger.disabled = True
 
     return logging.getLogger("YTDLP_Server")
 

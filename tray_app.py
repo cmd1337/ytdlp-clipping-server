@@ -1,7 +1,5 @@
-"""Windows tray launcher for the clipping server.
-
-The packaged executable runs the FastAPI app in the same no-console process and
-keeps only a small system tray icon for shutdown control.
+"""
+Simple Windows executable for starting up server in tray to run without Docker/manual Python setup&start up.
 """
 
 from __future__ import annotations
@@ -28,6 +26,10 @@ def application_dir() -> Path:
 
 
 def acquire_single_instance_lock() -> Optional[int]:
+    """
+    Pretty stupid workaround to hold only one instance of server on start-up, prevent possible process duplication,
+    probably will be fixed later once im not lazy(never?).
+    """
     if os.name != "nt":
         return None
 
@@ -62,6 +64,9 @@ def run_server(server_ready: threading.Event) -> uvicorn.Server:
 
 
 def create_icon_image() -> Any:
+    """
+    Pretty cool icon am i right?
+    """
     from PIL import Image, ImageDraw
 
     image = Image.new("RGBA", (64, 64), (21, 101, 192, 255))

@@ -31,6 +31,9 @@ def parse_timerange(start_str: str, end_str: str, timescale: int) -> Tuple[int, 
 
 
 def fragment_gen_factory(orig_gen, fragment_range: range):
+    """
+    Pretty clever fragment generator i stole from someone else.
+    """
     total = len(fragment_range)
 
     def fragment_gen(ctx):
