@@ -14,6 +14,12 @@ def time_to_seconds(time_str: str) -> int:
     return hours * 3600 + minutes * 60 + seconds
 
 
+def apply_proxy_options(options: dict) -> dict:
+    if Config.VOD_PROXY:
+        options["proxy"] = Config.VOD_PROXY
+    return options
+
+
 def build_vod_options(outtmpl_path: str, start_time_str: str, end_time_str: str) -> dict:
     download_range = (time_to_seconds(start_time_str), time_to_seconds(end_time_str))
     vod_opts = {
@@ -25,10 +31,7 @@ def build_vod_options(outtmpl_path: str, start_time_str: str, end_time_str: str)
         "no_warnings": True,
     }
 
-    if Config.VOD_PROXY:
-        vod_opts["proxy"] = Config.VOD_PROXY
-
-    return vod_opts
+    return apply_proxy_options(vod_opts)
 
 
 def run_yt_dlp_process(
@@ -46,11 +49,11 @@ def run_yt_dlp_process(
 
     outtmpl_path = os.path.join(Config.DOWNLOAD_DIR, f"{final_filename}.%(ext)s")
 
-    ydl_opts = {
+    ydl_opts = apply_proxy_options({
         "live_from_start": True,
         "quiet": True,
         "no_warnings": True,
-    }
+    })
 
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
