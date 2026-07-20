@@ -17,7 +17,7 @@ def check_env_file() -> None:
         return
 
     with open(ENV_PATH, "w", encoding="utf-8") as env_file:
-        env_file.write("AUTH_TOKEN=fallback_token\n")
+        env_file.write("AUTH_TOKEN=your_secret_secure_token_here\n")
         env_file.write("ALLOWED_DOMAINS=youtube.com,youtu.be\n")
         env_file.write("DOWNLOAD_DIR=downloads\n")
         env_file.write("SERVER_DOMAIN=\n")
