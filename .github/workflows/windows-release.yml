@@ -1,0 +1,43 @@
+name: Build Windows executable
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-exe:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements-build.txt
+
+      - name: Build hidden tray executable
+        run: >-
+          pyinstaller --onefile --noconsole --name ytdlp-clipping-server
+          --collect-all yt_dlp --collect-all pystray --collect-all PIL tray_app.py
+
+      - name: Upload executable to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/ytdlp-clipping-server.exe
+
+      - name: Upload executable artifact
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ytdlp-clipping-server-windows
+          path: dist/ytdlp-clipping-server.exe
