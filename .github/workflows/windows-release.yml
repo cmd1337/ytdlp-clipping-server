@@ -29,8 +29,6 @@ jobs:
           pyinstaller --onefile --noconsole --name ytdlp-clipping-server
           --hidden-import main --hidden-import config --hidden-import database
           --hidden-import worker --hidden-import utils
-          --add-data "main.py;." --add-data "config.py;." --add-data "database.py;."
-          --add-data "worker.py;." --add-data "utils.py;."
           --collect-all yt_dlp --collect-all pystray --collect-all PIL tray_app.py
 
       - name: Upload executable to GitHub release

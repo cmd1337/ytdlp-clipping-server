@@ -1,12 +1,15 @@
 """Windows tray launcher for the clipping server.
+
+The packaged executable runs the FastAPI app in the same no-console process and
+keeps only a small system tray icon for shutdown control.
 """
 
 from __future__ import annotations
 
+import ctypes
 import os
-import signal
-import subprocess
 import sys
+import threading
 from pathlib import Path
 from typing import Any, Optional
 
@@ -14,7 +17,8 @@ import uvicorn
 
 UVICORN_HOST = "0.0.0.0"
 UVICORN_PORT = 8000
-SERVER_ARG = "--run-server"
+WINDOWS_MUTEX_NAME = "Global\\YTDLPClippingServerTrayApp"
+ERROR_ALREADY_EXISTS = 183
 
 
 def application_dir() -> Path:
@@ -23,30 +27,38 @@ def application_dir() -> Path:
     return Path(__file__).resolve().parent
 
 
-def server_command() -> list[str]:
-    if getattr(sys, "frozen", False):
-        return [sys.executable, SERVER_ARG]
-    return [sys.executable, str(Path(__file__).resolve()), SERVER_ARG]
+def acquire_single_instance_lock() -> Optional[int]:
+    if os.name != "nt":
+        return None
+
+    kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+    mutex = kernel32.CreateMutexW(None, False, WINDOWS_MUTEX_NAME)
+    if ctypes.get_last_error() == ERROR_ALREADY_EXISTS:
+        return 0
+    return mutex
 
 
-def server_log_path() -> Path:
-    log_dir = application_dir() / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
-    return log_dir / "tray_server.log"
-
-
-def run_server() -> None:
+def run_server(server_ready: threading.Event) -> uvicorn.Server:
     os.chdir(application_dir())
 
-    from main import app as _server_app
+    from main import app
 
-    del _server_app
-    uvicorn.run(
-        "main:app",
+    config = uvicorn.Config(
+        app,
         host=UVICORN_HOST,
         port=UVICORN_PORT,
-        reload=True,
+        log_config=None,
+        access_log=False,
     )
+    server = uvicorn.Server(config)
+
+    def serve() -> None:
+        server_ready.set()
+        server.run()
+
+    thread = threading.Thread(target=serve, name="uvicorn-server", daemon=True)
+    thread.start()
+    return server
 
 
 def create_icon_image() -> Any:
@@ -63,9 +75,12 @@ class TrayServer:
     def __init__(self) -> None:
         import pystray
 
-        self.pystray = pystray
-        self.process: Optional[subprocess.Popen[bytes]] = None
-        self.log_handle: Optional[Any] = None
+        self.instance_lock = acquire_single_instance_lock()
+        if self.instance_lock == 0:
+            raise SystemExit(0)
+
+        self.server_ready = threading.Event()
+        self.server: Optional[uvicorn.Server] = None
         self.icon = pystray.Icon(
             "ytdlp-clipping-server",
             create_icon_image(),
@@ -77,40 +92,11 @@ class TrayServer:
         )
 
     def start_server(self) -> None:
-        creationflags = 0
-        startupinfo = None
-        if os.name == "nt":
-            creationflags = subprocess.CREATE_NO_WINDOW
-            startupinfo = subprocess.STARTUPINFO()
-            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-
-        self.log_handle = server_log_path().open("ab")
-        self.process = subprocess.Popen(
-            server_command(),
-            cwd=application_dir(),
-            stdin=subprocess.DEVNULL,
-            stdout=self.log_handle,
-            stderr=subprocess.STDOUT,
-            creationflags=creationflags,
-            startupinfo=startupinfo,
-        )
+        self.server = run_server(self.server_ready)
 
     def stop_server(self) -> None:
-        try:
-            if self.process and self.process.poll() is None:
-                if os.name == "nt":
-                    self.process.terminate()
-                else:
-                    self.process.send_signal(signal.SIGTERM)
-
-                try:
-                    self.process.wait(timeout=10)
-                except subprocess.TimeoutExpired:
-                    self.process.kill()
-        finally:
-            if self.log_handle:
-                self.log_handle.close()
-                self.log_handle = None
+        if self.server:
+            self.server.should_exit = True
 
     def exit_app(self, icon: Any, item: Any) -> None:
         self.stop_server()
@@ -118,11 +104,9 @@ class TrayServer:
 
     def run(self) -> None:
         self.start_server()
+        self.server_ready.wait(timeout=10)
         self.icon.run()
 
 
 if __name__ == "__main__":
-    if SERVER_ARG in sys.argv:
-        run_server()
-    else:
-        TrayServer().run()
+    TrayServer().run()
