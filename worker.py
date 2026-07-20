@@ -96,7 +96,7 @@ def run_yt_dlp_process(
     if not actual_file:
         raise FileNotFoundError("yt-dlp finished but output file was not detected")
 
-    logger.info(f"Clip {[final_filename]}] successfully saved to {[ydl.params["outtmpl"]]}.")
+    logger.info(f"Clip {[final_filename]}] successfully saved to {os.path.join(Config.DOWNLOAD_DIR, actual_file)}.")
 
     if Config.SERVER_DOMAIN:
         base_url = Config.SERVER_DOMAIN if Config.SERVER_DOMAIN.endswith("/") else f"{Config.SERVER_DOMAIN}/"
