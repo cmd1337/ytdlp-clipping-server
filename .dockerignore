@@ -1,0 +1,16 @@
+.git
+.github
+__pycache__/
+*.py[cod]
+*.db
+.gitignore
+.env
+logs/
+downloads/
+dist/
+build/
+*.spec
+.venv/
+venv/
+.github/
+requirements-build.txt

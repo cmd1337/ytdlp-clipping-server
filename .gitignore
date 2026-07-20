@@ -5,6 +5,6 @@ venv/
 downloads/
 .env
 *.log
-.dockerignore
 tasks.db
 logs/
+docs/
