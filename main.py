@@ -30,6 +30,9 @@ app = FastAPI(title="YouTube Clip Downloader API", lifespan=lifespan)
 
 @app.post("/download", status_code=status.HTTP_200_OK)
 async def create_download_task(req: DownloadRequest):
+    """
+    Endpoint for downloads.
+    """
     if req.token != Config.AUTH_TOKEN:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -74,6 +77,9 @@ async def create_download_task(req: DownloadRequest):
 
 @app.get("/task_status/{task_id}")
 async def check_task_status(task_id: str):
+    """
+    Endpoint for status polling.
+    """
     task = get_task_db(task_id)
     if not task:
         raise HTTPException(
