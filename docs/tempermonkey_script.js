@@ -20,7 +20,7 @@
 
     const DEFAULTS = {
         serverUrl: 'http://localhost:8000',
-        token: '',
+        token: 'your_secret_secure_token_here',
         endpointDownload: '/download',
         endpointStatus: '/task_status/%task_id%',
         pollInterval: 3000,
