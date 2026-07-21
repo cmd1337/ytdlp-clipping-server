@@ -107,6 +107,7 @@ It will show simple GUI, which contains following elements:
   * Polling Interval - how often it check for task completion in milliseconds, default - 3000 ms - every 3 seconds, you can make it lower if you want to.
   * yt-dlp Command Template - yt-dlp command template for local mode(in the left upper corner of the clipping GUI), simply uses placeholders as file name template, useful if you want to use it to copy pre-made command with all data filled in.
   
+To use it just enter the name of the clip, start timestamp(you can just clip button right next to it to copy current timestamp), end timestamp and click "Download Segment". When you use it first time it will ask permission to send requests to localhost(127.0.0.1), just click "always allow", so it won't show up again.
 
 ### .env config
 
