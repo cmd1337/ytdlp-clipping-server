@@ -9,7 +9,6 @@ from pydantic import BaseModel, Field
 ENV_PATH = ".env"
 DEFAULT_LOG_FILE = "logs/app.log"
 DEFAULT_VOD_FORMAT = "bv*[ext=mp4]+ba[ext=m4a]/b[ext=mp4] / bv*+ba/b"
-DEFAULT_VOD_PROXY = "http://127.0.0.1:7890"
 
 
 def check_env_file() -> None:
@@ -23,7 +22,7 @@ def check_env_file() -> None:
         env_file.write("SERVER_DOMAIN=\n")
         env_file.write(f"LOG_FILE={DEFAULT_LOG_FILE}\n")
         env_file.write(f"VOD_FORMAT={DEFAULT_VOD_FORMAT}\n")
-        env_file.write(f"VOD_PROXY={DEFAULT_VOD_PROXY}\n")
+        env_file.write(f"VOD_PROXY=\n")
 
 
 check_env_file()
@@ -41,7 +40,7 @@ class Config:
     SERVER_DOMAIN: Optional[str] = os.getenv("SERVER_DOMAIN")
     LOG_FILE: str = os.getenv("LOG_FILE", DEFAULT_LOG_FILE)
     VOD_FORMAT: str = os.getenv("VOD_FORMAT", DEFAULT_VOD_FORMAT)
-    VOD_PROXY: Optional[str] = os.getenv("VOD_PROXY", DEFAULT_VOD_PROXY) or None
+    VOD_PROXY: Optional[str] = os.getenv("VOD_PROXY") or None
 
 
 if not os.path.isabs(Config.DOWNLOAD_DIR):
