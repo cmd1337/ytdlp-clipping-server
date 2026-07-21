@@ -1,5 +1,5 @@
 ## What is this?
-Simple FastAPI based server that accepts and processes requests for video/VODS/live-streams download.
+Simple FastAPI and yt-dlp based server that accepts and processes requests for video/VODS/live-streams download.
 
 ## How does it work?
 In simple words it runs two API end-points:
