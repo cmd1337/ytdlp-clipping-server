@@ -7,7 +7,7 @@ In simple words it runs two API end-points:
 2. /task_status/{task_id} - to track status of given tasks(id is provided as response from /download).
 
 ## Why do I need this?
-Well, simply because of two things:
+Well, simply because of those things:
 1. By default, yt-dlp can't properly download part of the **ongoing** streams( --download-sections flag doesn't interact that well with YouTube DASH fragmented streams and won't download correct section from given timestamps). To bypass that we use ***simple magic*** to get correct fragment by ourselves and trick yt-dlp into downloading them.
 2. The whole idea is to use it together with [custom-made(and half vibe-coded) Tampermonkey JS script](https://github.com/cmd1337/ytdlp-clipping-server/blob/master/docs/tampermonkey_script.user.js) that adds button under the video, which opens simple interface for clipping(name of the clip, start timestamp and end timestamp). There are a dedicated button for each timestamp to get current timing, which works even if rewind feature is disabled for the stream, so you don't need to guess timestamp by yourself.
 3. It can run both locally or on remove server, in first case it will just save downloaded clips to specified directory and provide path to it in response visible on the clipping panel. In case of hosting it remotely you can specify server domain, so it will format link to it and provide it as response instead of path(currently you will need to find a way to host files by yourself, by example with Nginx/Caddy or any other HTTP server, but maybe I'll add simple file server later as well as an option).
