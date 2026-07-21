@@ -38,7 +38,7 @@ There are three ways to use it, from easiest(on Windows) to hardest(kinda):
 ### Pre-built .exe
 1. Download the latest .exe file from release page - https://github.com/cmd1337/ytdlp-clipping-server/releases/latest
 2. Put it in any directory wherever you want to run.
-   * Windows Defender will probably notify you that it's may be not safe to run, it's because it's basically packed up Python and a bunch of scripts, which seems malicious for it, I can't really do anything to prevent this pop-ups, so if afraid to run it you can check source code and then make your own executable from sources with pyinstaller.
+   * Windows Defender will probably notify you that it's may be not safe to run, it's because it's basically packed up Python and a bunch of scripts, which seems malicious for it, I can't really do anything to prevent those pop-ups, so if afraid to run it you can check source code and then make your own executable from sources with pyinstaller.
 3. It will create all mandatory files and directories< and you will see server icon in the system tray, right click on it will show ip(127.0.0.1/localhost) with port and exit button.
 4. After that it's ready to use.
 
