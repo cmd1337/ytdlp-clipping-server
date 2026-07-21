@@ -46,4 +46,4 @@ jobs:
           name: ytdlp-clipping-server-windows
           path: |
             dist/ytdlp-clipping-server.exe
-            docs/tempermonkey_script.js
+            docs/tampermonkey_script.user.js
