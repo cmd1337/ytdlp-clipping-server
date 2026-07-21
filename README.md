@@ -117,3 +117,9 @@ Same as userscript server has some basic settings you can tweak for yourself by 
 * LOG_FILE - same as DOWNLOAD_DIR but should specify name of the file at the end.
 * VOD_FORMAT - format for downloading finished streams/plain videos, uses basic yt-dlp format selection, more about it [here](https://github.com/yt-dlp/yt-dlp#format-selection), default one downloads the best video quality with mp4 container and the best audio with m4a container, if can't find any, then just the best video and audio, otherwise just best.
 * VOD_PROXY - proxy to use for downloading, accepts default proxy schemes such as ```http://ip:port``` or ```socks5://user:pass@ip:port```, more about it [here](https://github.com/yt-dlp/yt-dlp#network-options). As for now it should automatically grab system proxy if one is set, but you can specify it manually here. There is also a bug with local(127.0.0.1) proxies from various VPN clients(x-ray, mihomo, sing-core) in Docker setups, will be fixed later, so if you use such one, then just live this one empty, it should work just fine for now. As for now it doesn't support multiple proxies rotation, but will be added later, probably.
+
+
+## Planned
+1. Add multiple proxies support with rotation.
+2. Simple http server for file hosting.
+3. Files keep limit config line with automatic removal of the oldest ones.
