@@ -10,6 +10,7 @@ on:
       - "docs/**"
       - ".github/**"
       - ".gitignore"
+      - README.md
   workflow_dispatch:
 
 permissions:
