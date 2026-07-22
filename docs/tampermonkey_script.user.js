@@ -26,7 +26,8 @@
         pollInterval: 3000,
         cmdTemplate: 'yt-dlp --download-sections "*%current_time%-%end_time%" --force-keyframes-at-cuts -o "%file_name%.%(ext)s" "%url%"',
         fileTemplate: '%channel_name%_%clip_name%',
-        mode: 'remote'
+        mode: 'remote',
+        ffmpegPostprocessorArgs: ''
     };
 
     const LABELS = {
@@ -49,6 +50,7 @@
         intervalLabel: 'Polling Interval (ms):',
         cmdTemplateLabel: 'yt-dlp Command Template:',
         fileTemplateLabel: 'File Name Template:',
+        ffmpegPostprocessorArgsLabel: 'ffmpeg Postprocessor Args:',
         btnSave: 'Save Config',
 
         statusLabel: 'Status:',
@@ -144,7 +146,8 @@
             pollInterval: parseInt(localStorage.getItem('ytdl_interval')) || DEFAULTS.pollInterval,
             cmdTemplate: localStorage.getItem('ytdl_cmd_template') || DEFAULTS.cmdTemplate,
             fileTemplate: localStorage.getItem('ytdl_file_template') || DEFAULTS.fileTemplate,
-            mode: localStorage.getItem('ytdl_working_mode') || DEFAULTS.mode
+            mode: localStorage.getItem('ytdl_working_mode') || DEFAULTS.mode,
+            ffmpegPostprocessorArgs: localStorage.getItem('ytdl_ffmpeg_pp_args') || DEFAULTS.ffmpegPostprocessorArgs
         };
     }
 
@@ -455,6 +458,7 @@
         const intField = createInputField({ labelText: LABELS.intervalLabel, value: currentSettings.pollInterval.toString() });
         const cmdField = createInputField({ labelText: LABELS.cmdTemplateLabel, value: currentSettings.cmdTemplate });
         const fileField = createInputField({ labelText: LABELS.fileTemplateLabel, value: currentSettings.fileTemplate });
+        const ffmpegArgsField = createInputField({labelText: LABELS.ffmpegPostprocessorArgsLabel, value: currentSettings.ffmpegPostprocessorArgs, placeholder: '-vf scale=1280:-2 -c:a copy'});
 
         const btnSaveSettings = document.createElement('button');
         btnSaveSettings.textContent = LABELS.btnSave;
@@ -467,6 +471,7 @@
         settingsPanel.appendChild(intField.container);
         settingsPanel.appendChild(cmdField.container);
         settingsPanel.appendChild(fileField.container);
+        settingsPanel.appendChild(ffmpegArgsField.container);
         settingsPanel.appendChild(btnSaveSettings);
         document.body.appendChild(settingsPanel);
 
@@ -548,6 +553,7 @@
             localStorage.setItem('ytdl_interval', intField.input.value.trim());
             localStorage.setItem('ytdl_cmd_template', cmdField.input.value.trim());
             localStorage.setItem('ytdl_file_template', fileField.input.value.trim());
+            localStorage.setItem('ytdl_ffmpeg_pp_args', ffmpegArgsField.input.value.trim());
             if (settingsPanel) settingsPanel.style.display = 'none';
         });
 
@@ -628,7 +634,8 @@
                         filename: resolvedFileName,
                         start_time: meta.current_time,
                         end_time: meta.end_time,
-                        timescale: getLatencyMode()
+                        timescale: getLatencyMode(),
+                        ffmpeg_postprocessor_args: activeSettings.ffmpegPostprocessorArgs
                     }),
                     onload: function(res) {
                         if (res.status === 200) {

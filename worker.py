@@ -1,12 +1,41 @@
 import os
 import asyncio
 import sqlite3
+import tempfile
 import yt_dlp
-from config import Config, logger
+from yt_dlp.postprocessor.ffmpeg import FFmpegPostProcessor
+from config import Config, logger, parse_ffmpeg_postprocessor_args
 from database import update_task_db, DB_PATH
 from utils import parse_timerange, fragment_gen_factory, TIMESCALES
 
 task_queue: asyncio.Queue[str] = asyncio.Queue()
+
+
+def apply_ffmpeg_postprocessing(file_path: str, args_str: str) -> str:
+    ffmpeg_args = parse_ffmpeg_postprocessor_args(args_str)
+    if not ffmpeg_args:
+        return file_path
+
+    file_dir = os.path.dirname(file_path)
+    base_name = os.path.basename(file_path)
+    stem, ext = os.path.splitext(base_name)
+    temp_output = None
+
+    with tempfile.NamedTemporaryFile(
+        prefix=f".{stem}.postprocess.", suffix=ext, dir=file_dir, delete=False
+    ) as temp_file:
+        temp_output = temp_file.name
+
+    try:
+        logger.info(f"Applying ffmpeg postprocessing to {file_path}: {args_str}")
+        ffmpeg_pp = FFmpegPostProcessor()
+        ffmpeg_pp.run_ffmpeg(file_path, temp_output, ffmpeg_args)
+        os.replace(temp_output, file_path)
+        return file_path
+    except Exception:
+        if temp_output and os.path.exists(temp_output):
+            os.remove(temp_output)
+        raise
 
 
 def time_to_seconds(time_str: str) -> int:
@@ -40,7 +69,8 @@ def run_yt_dlp_process(
     start_time_str: str,
     end_time_str: str,
     target_filename: str,
-    timescale_str: str) -> str:
+    timescale_str: str,
+    ffmpeg_postprocessor_args: str) -> str:
     logger.info(f"[{task_id}] Extracting info for: {url}")
     final_filename = target_filename
 
@@ -99,7 +129,10 @@ def run_yt_dlp_process(
     if not actual_file:
         raise FileNotFoundError("yt-dlp finished but output file was not detected")
 
-    logger.info(f"Clip {[final_filename]}] successfully saved to {os.path.join(Config.DOWNLOAD_DIR, actual_file)}.")
+    actual_path = os.path.join(Config.DOWNLOAD_DIR, actual_file)
+    apply_ffmpeg_postprocessing(actual_path, ffmpeg_postprocessor_args)
+
+    logger.info(f"Clip {[final_filename]}] successfully saved to {actual_path}.")
 
     if Config.SERVER_DOMAIN:
         base_url = Config.SERVER_DOMAIN if Config.SERVER_DOMAIN.endswith("/") else f"{Config.SERVER_DOMAIN}/"
@@ -117,7 +150,13 @@ async def queue_worker() -> None:
         with sqlite3.connect(DB_PATH) as conn:
             conn.row_factory = sqlite3.Row
             cursor = conn.cursor()
-            cursor.execute("SELECT url, filename, start_time, end_time, timescale FROM tasks WHERE id = ?", (task_id,))
+            cursor.execute(
+                """
+                SELECT url, filename, start_time, end_time, timescale, ffmpeg_postprocessor_args
+                FROM tasks WHERE id = ?
+                """,
+                (task_id,)
+            )
             row = cursor.fetchone()
 
         if not row:
@@ -129,6 +168,7 @@ async def queue_worker() -> None:
         start_time = row["start_time"]
         end_time = row["end_time"]
         timescale_str = row["timescale"]
+        ffmpeg_postprocessor_args = row["ffmpeg_postprocessor_args"] or ""
 
         update_task_db(task_id, "processing", f"Video {url} download is in progress.")
 
@@ -137,7 +177,7 @@ async def queue_worker() -> None:
             result = await loop.run_in_executor(
                 None,
                 run_yt_dlp_process,
-                task_id, url, start_time, end_time, filename, timescale_str
+                task_id, url, start_time, end_time, filename, timescale_str, ffmpeg_postprocessor_args
             )
             update_task_db(task_id, "Success", result)
         except Exception as e:

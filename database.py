@@ -17,9 +17,14 @@ def init_db() -> None:
                 start_time TEXT,
                 end_time TEXT,
                 timescale TEXT,
+                ffmpeg_postprocessor_args TEXT DEFAULT '',
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        cursor.execute("PRAGMA table_info(tasks)")
+        columns = {row[1] for row in cursor.fetchall()}
+        if "ffmpeg_postprocessor_args" not in columns:
+            cursor.execute("ALTER TABLE tasks ADD COLUMN ffmpeg_postprocessor_args TEXT DEFAULT ''")
         conn.commit()
     logger.info("SQLite database initialized successfully.")
 

@@ -1,6 +1,7 @@
 import logging
 import os
 from logging.handlers import RotatingFileHandler
+import shlex
 from typing import List, Optional
 
 from dotenv import load_dotenv
@@ -96,3 +97,16 @@ class DownloadRequest(BaseModel):
     end_time: str = Field(..., examples=["01:25:00"])
     filename: str
     timescale: str = Field("normal", examples=["normal", "low", "ultralow"])
+    ffmpeg_postprocessor_args: str = Field("", examples=["-vf scale=1280:-2 -c:a copy"])
+
+
+def parse_ffmpeg_postprocessor_args(args: str) -> List[str]:
+    if not args or not args.strip():
+        return []
+
+    try:
+        parsed_args = shlex.split(args)
+    except ValueError as exc:
+        raise ValueError(f"Invalid ffmpeg postprocessor arguments syntax: {exc}") from exc
+
+    return parsed_args

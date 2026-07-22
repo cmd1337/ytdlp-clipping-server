@@ -5,7 +5,7 @@ import asyncio
 from fastapi import FastAPI, HTTPException, status
 from contextlib import asynccontextmanager
 
-from config import Config, DownloadRequest, logger
+from config import Config, DownloadRequest, logger, parse_ffmpeg_postprocessor_args
 from database import init_db, get_task_db, DB_PATH
 from utils import sanitize_filename
 from worker import task_queue, queue_worker
@@ -51,6 +51,14 @@ async def create_download_task(req: DownloadRequest):
             detail="Filename is invalid or empty after purification"
         )
 
+    try:
+        parse_ffmpeg_postprocessor_args(req.ffmpeg_postprocessor_args)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc)
+        ) from exc
+
     task_id = generate_task_id()
     init_desc = "In queue."
 
@@ -58,10 +66,13 @@ async def create_download_task(req: DownloadRequest):
         cursor = conn.cursor()
         cursor.execute(
             """
-            INSERT INTO tasks (id, url, filename, status, description, start_time, end_time, timescale) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO tasks (id, url, filename, status, description, start_time, end_time, timescale, ffmpeg_postprocessor_args)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
-            (task_id, req.link, safe_name, "pending", init_desc, req.start_time, req.end_time, req.timescale)
+            (
+                task_id, req.link, safe_name, "pending", init_desc,
+                req.start_time, req.end_time, req.timescale, req.ffmpeg_postprocessor_args.strip()
+            )
         )
         conn.commit()
 
