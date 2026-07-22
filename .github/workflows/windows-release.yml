@@ -37,7 +37,7 @@ jobs:
         with:
           files: |
             dist/ytdlp-clipping-server.exe
-            docs/tempermonkey_script.js
+            docs/tampermonkey_script.user.js
 
       - name: Upload artifact
         if: github.event_name == 'workflow_dispatch'
